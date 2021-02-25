@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.testm.demosdk">
+
+    <application
+        android:hardwareAccelerated="true">
+
+        <activity android:name=".view.SoundActivity"></activity>
+
+    </application>
+</manifest>
