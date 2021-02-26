@@ -3,6 +3,7 @@ package com.testm.demosdk.view.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.testm.demosdk.R
@@ -20,6 +21,7 @@ class SoundsAdapter(private var dataSet: Array<SoundItemUi>, private val onClick
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val textView: TextView = view.findViewById(R.id.textView)
+        val progressBar: ProgressBar = view.findViewById(R.id.progress_bar)
 
     }
 
@@ -41,6 +43,7 @@ class SoundsAdapter(private var dataSet: Array<SoundItemUi>, private val onClick
         val item = dataSet[position]
 
         viewHolder.textView.text = item.soundItem.name
+        viewHolder.progressBar.progress = item.progress
 
         viewHolder.itemView.setOnClickListener {
             onClickListener?.onClick(item)

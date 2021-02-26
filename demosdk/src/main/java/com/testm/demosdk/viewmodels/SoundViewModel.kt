@@ -1,7 +1,6 @@
 package com.testm.demosdk.viewmodels
 
 import android.content.Context
-import android.net.Uri
 import android.util.Log
 import android.webkit.URLUtil
 import androidx.lifecycle.LiveData
@@ -11,9 +10,11 @@ import androidx.lifecycle.viewModelScope
 import com.testm.demosdk.model.SoundItem
 import com.testm.demosdk.model.SoundItemUi
 import com.testm.demosdk.network.Api
+import com.testm.demosdk.network.Download
+import com.testm.demosdk.network.downloadToFileWithProgress
 import com.testm.demosdk.util.FileUtil
 import kotlinx.coroutines.*
-import java.io.File
+import kotlinx.coroutines.flow.collect
 import java.lang.Exception
 import java.lang.RuntimeException
 import java.util.*
@@ -37,6 +38,8 @@ class SoundViewModelImpl(private val api: Api,
     override val isRefreshing: MutableLiveData<Boolean> = MutableLiveData()
     override val fileList : MutableLiveData<List<SoundItemUi>> = MutableLiveData()
 
+    var myFiles: List<SoundItemUi> = listOf()
+
     override fun refreshSounds(url: String){
 
         isRefreshing.postValue(true)
@@ -53,36 +56,47 @@ class SoundViewModelImpl(private val api: Api,
                 val filterSounds = soundList.distinctBy { it.url }
 
                 //download all files
-                val items = downloadFiles(filterSounds)
+                Log.d(TAG, "refreshSounds: before download files")
 
-                fileList.postValue(items)
+                myFiles = filterSounds.map { SoundItemUi("",0,it) }
+                fileList.postValue(myFiles)
+                downloadFiles(filterSounds) {
+
+                        myFiles = myFiles?.map { mapItem ->
+                            if(mapItem.soundItem.id == it.soundItem.id){ it } else { mapItem }}
+
+                        fileList.postValue(myFiles)
+                }
+
+                myFiles = myFiles.filter { it.progress == 100 }
+                fileList.postValue(myFiles)
+
+                Log.d(TAG, "refreshSounds: after download files")
+
                 isRefreshing.postValue(false)
             }
         }
     }
 
-    private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
-        Log.d(TAG, "error: " + exception)
-    }
+    private suspend fun downloadFiles(files: List<SoundItem>, downloadProgress: (SoundItemUi) -> Unit) {
 
-    private suspend fun downloadFiles(files: List<SoundItem>) : List<SoundItemUi> =
-        withContext(Dispatchers.IO) {
-            supervisorScope {
+        // create sound file folder and delete old files if exist
+        val folder = appContext.filesDir.path + SOUNDS_FOLDER;
+        fileUtil.deleteFilesFromDirectory(folder)
+        fileUtil.createDirectory(folder)
 
-                val deferrerList: MutableList<Deferred<SoundItemUi>> = mutableListOf()
-
-                // create sound file folder and delete old files if exist
-                val folder = appContext.filesDir.path + SOUNDS_FOLDER;
-                fileUtil.deleteFilesFromDirectory(folder)
-                fileUtil.createDirectory(folder)
+        supervisorScope {
 
 
-                files.forEach { item ->
-                    val url = async(exceptionHandler) {
-                        val url = item.url
+            files.forEach { item ->
 
-                        // download file
-                        val requestBody = api.download(url)
+                val url = item.url
+
+                try {
+                    // download file
+                    val responseBody = api.getUrl(url)
+
+                    async() {
 
                         // save file to disk
                         val filePath = folder + "/" + UUID.randomUUID() + URLUtil.guessFileName(
@@ -91,18 +105,23 @@ class SoundViewModelImpl(private val api: Api,
                             null
                         )
 
-                        fileUtil.saveFileToDisk(requestBody.byteStream(), filePath)
-
-                        // return Sound item with the file uri
-                        SoundItemUi(Uri.fromFile(File(filePath)).toString(), item)
+                        responseBody.downloadToFileWithProgress(filePath, item.id).collect {
+                            when (it) {
+                                is Download.Progress -> {
+                                    Log.d("SoundViewModel", "download: " + it.percent)
+                                    downloadProgress(SoundItemUi("", it.percent, item))
+                                }
+                                is Download.Finished -> {
+                                    Log.d("SoundViewModel", "download finished: ")
+                                    downloadProgress(SoundItemUi(filePath, 100, item))
+                                }
+                            }
+                        }
                     }
-                    deferrerList.add(url)
+                } catch (e: Exception) {
+                    Log.d(TAG, "downloadFiles: exepption:" + e)
                 }
-
-                // wait for all request, if fails filter don't add to list
-                deferrerList.mapNotNull { try { it.await() } catch (e: Exception) { null } }
             }
+        }
     }
-
-
 }
