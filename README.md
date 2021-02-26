@@ -13,11 +13,12 @@ file stracture:
  -FileUtil 
 |view
  |adapters
-  - SoundAdspter
+  - SoundAdapter
  - SoundActivity
 |viewmodels
   -soundViewModel
   -soundViewModelFactory
+DemoSdk
 ```
 
 - using corotinus for managing data and network and live data to send data to the view
