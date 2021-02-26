@@ -4,6 +4,7 @@ import android.content.Intent
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -24,17 +25,21 @@ class SoundActivity: AppCompatActivity() {
 
     var mediaPlayer: MediaPlayer? = null
 
+    var mainHandler: Handler? = null
+
     lateinit var adapter: SoundsAdapter
 
     companion object {
         val TAG = SoundActivity::class.java.simpleName
     }
 
-    val soundViewModel: SoundViewModel by viewModels({SoundViewModelFactory()})
+    val soundViewModel: SoundViewModel by viewModels {SoundViewModelFactory()}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main_second)
+
+        mainHandler = Handler(mainLooper)
 
         soundListView.layoutManager = LinearLayoutManager(this)
         adapter = SoundsAdapter(arrayOf(), object : OnClickListener {
@@ -59,7 +64,7 @@ class SoundActivity: AppCompatActivity() {
     }
 
     private fun readBarcode() {
-        IntentIntegrator(this).initiateScan();
+        IntentIntegrator(this).setOrientationLocked(true).initiateScan();
     }
 
     fun playSound(uri: Uri) {
@@ -80,10 +85,12 @@ class SoundActivity: AppCompatActivity() {
         stopPlaying()
     }
 
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
         if (result != null) {
             if (result.contents == null) {
+                mainHandler?.post { finish() }
                 Toast.makeText(this, "Cancelled", Toast.LENGTH_LONG).show()
             } else {
                 Toast.makeText(this, "Scanned: " + result.contents, Toast.LENGTH_LONG).show()

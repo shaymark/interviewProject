@@ -3,24 +3,32 @@ package com.testm.demosdk
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import com.testm.demosdk.di.Providers
 import com.testm.demosdk.view.SoundActivity
 
-class DemoSdk(appContext: Context) {
+interface DemoSdk {
+    fun showData(activity: Activity, requestCode: Int)
+    fun initSdk(appContext: Context)
 
-    init {
-        Providers.appContext = appContext
+    companion object: DemoSdk {
+        var isInit = false
+
+        private fun checkInit() {
+            if(isInit == false) {
+                throw (RuntimeException("must init the sdk before using it !!!"))
+            }
+        }
+
+        override fun initSdk(appContext: Context) {
+            Providers.appContext = appContext
+            DemoSdk.isInit = true
+        }
+
+        override fun showData(activity: Activity, requestCode: Int) {
+            checkInit()
+
+            activity.startActivityForResult(Intent(activity, SoundActivity::class.java), requestCode)
+        }
+
     }
-
-    fun showData(activity: Activity, requestCode: Int) {
-        openNewScreen(activity, requestCode)
-    }
-
-    private fun openNewScreen(activity: Activity, requestCode: Int) {
-        activity.startActivityForResult(getIntent(activity), requestCode)
-    }
-
-    private fun getIntent(context: Context): Intent = Intent(context, SoundActivity::class.java)
-
 }
