@@ -17,10 +17,12 @@ import com.testm.demosdk.model.SoundItemUi
 import com.testm.demosdk.view.adapters.OnClickListener
 import com.testm.demosdk.view.adapters.SoundsAdapter
 import com.testm.demosdk.viewmodels.SoundViewModel
-import com.testm.demosdk.viewmodels.SoundViewModelFactory
+import com.testm.demosdk.viewmodels.SoundViewModelImpl
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_main_second.*
 
 
+@AndroidEntryPoint
 class SoundActivity: AppCompatActivity() {
 
     var mediaPlayer: MediaPlayer? = null
@@ -33,7 +35,10 @@ class SoundActivity: AppCompatActivity() {
         val TAG = SoundActivity::class.java.simpleName
     }
 
-    val soundViewModel: SoundViewModel by viewModels {SoundViewModelFactory()}
+    private val soundViewModel: SoundViewModel by lazy {
+        val soundViewModelImpl: SoundViewModelImpl by viewModels()
+        soundViewModelImpl
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,9 +63,9 @@ class SoundActivity: AppCompatActivity() {
             progress_circular.visibility = if (it) View.VISIBLE else View.GONE
         })
 
-        // soundViewModel.getSounds("https://s3-eu-west-1.amazonaws.com/s3.testm.com/AppData/examJson.json")
+        soundViewModel.refreshSounds("https://s3-eu-west-1.amazonaws.com/s3.testm.com/AppData/examJson.json")
 
-        readBarcode()
+        //readBarcode()
     }
 
     private fun readBarcode() {

@@ -12,11 +12,15 @@ import com.testm.demosdk.model.SoundItem
 import com.testm.demosdk.model.SoundItemUi
 import com.testm.demosdk.network.Api
 import com.testm.demosdk.util.FileUtil
+import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.android.scopes.ViewModelScoped
 import kotlinx.coroutines.*
 import java.io.File
 import java.lang.Exception
 import java.lang.RuntimeException
 import java.util.*
+import javax.inject.Inject
 
 abstract class SoundViewModel: ViewModel() {
     abstract val fileList: LiveData<List<SoundItemUi>>
@@ -24,9 +28,11 @@ abstract class SoundViewModel: ViewModel() {
     abstract fun refreshSounds(url: String)
 }
 
-class SoundViewModelImpl(private val api: Api,
-                         private val fileUtil: FileUtil,
-                         private val appContext: Context)
+
+@HiltViewModel
+class SoundViewModelImpl @Inject constructor(private val api: Api,
+                                             private val fileUtil: FileUtil,
+                                             @ApplicationContext private val appContext: Context)
     : SoundViewModel() {
 
     companion object {

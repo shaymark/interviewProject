@@ -1,10 +1,13 @@
 package com.testm.demosdk.util
 
+import android.util.Log
 import com.testm.demosdk.viewmodels.SoundViewModelImpl
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
+import javax.inject.Inject
+import javax.inject.Singleton
 
 class FileUtil {
 

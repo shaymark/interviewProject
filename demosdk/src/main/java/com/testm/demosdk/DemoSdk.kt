@@ -3,7 +3,6 @@ package com.testm.demosdk
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import com.testm.demosdk.di.Providers
 import com.testm.demosdk.view.SoundActivity
 
 interface DemoSdk {
@@ -20,8 +19,7 @@ interface DemoSdk {
         }
 
         override fun initSdk(appContext: Context) {
-            Providers.appContext = appContext
-            DemoSdk.isInit = true
+            isInit = true
         }
 
         override fun showData(activity: Activity, requestCode: Int) {
