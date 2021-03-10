@@ -1,3 +1,5 @@
 include ':demosdk'
 include ':app'
+include ':javaTest'
+
 rootProject.name = "InterviewProject"
