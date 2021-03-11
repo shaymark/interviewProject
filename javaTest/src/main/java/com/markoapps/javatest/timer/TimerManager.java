@@ -1,5 +1,7 @@
 package com.markoapps.javatest.timer;
 
+import java.util.PriorityQueue;
+
 interface CustomTimer {
     void setTimer(Callback callback, long delay);
 }
@@ -9,7 +11,9 @@ interface CustomTimer {
 public class TimerManager implements CustomTimer {
 
     OriginTimer originTimer = new OriginTimer();
-    TimerList timerList = new TimerListImpl();
+
+    // Priority queue allow to find the minimal item
+    PriorityQueue<TimerItem> timerList = new PriorityQueue<>();
 
     @Override
     public void setTimer(Callback callback, long delay) {
@@ -18,14 +22,14 @@ public class TimerManager implements CustomTimer {
 
     void addTimer(Callback callback, long delay){
         TimerItem timerItem = new TimerItem(callback, System.currentTimeMillis() + delay);
-        timerList.addItem(timerItem);
+        timerList.add(timerItem);
 
         scheduleFirstItem();
     }
 
     void scheduleFirstItem(){
         // get the next item to execute and reschedule
-        TimerItem firstItem = timerList.getFirstItem();
+        TimerItem firstItem = timerList.peek();
 
         if(firstItem != null) {
             long delay = firstItem.timeToExecute - System.currentTimeMillis();
@@ -43,11 +47,12 @@ public class TimerManager implements CustomTimer {
     }
 
     public void executeAndRefreshTimer(){
-        //execute first item
-        TimerItem itemToExecute = timerList.getFirstItem();
+        //get and delete first item
+        TimerItem itemToExecute = timerList.poll();
+
+        // execute the callback
         if(itemToExecute != null) {
             itemToExecute.callback.execute();
-            timerList.deleteFirstItem();
         }
 
         scheduleFirstItem();
